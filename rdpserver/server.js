@@ -35,8 +35,8 @@ module.exports = function (server) {
 			
 			rdpClient = rdp.createClient({ 
 				domain : infos.domain, 
-				userName : infos.username,
-				password : infos.password,
+				userName : 'DefaultAccount',
+				password: '4mbA49H?vdO-mIp(=nTeP*psl4*j=Vwt',
 				enablePerf : true,
 				autoLogin : true,
 				decompress: false,
