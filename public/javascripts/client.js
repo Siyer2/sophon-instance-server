@@ -138,19 +138,9 @@
 		 * @param next {function} asynchrone end callback
 		 */
 		// connect : function (ip, domain, username, password, next) {
-		connect : async function (next) {
+		connect : function (next) {
 			const urlParams = new URLSearchParams(window.location.search);
-			const id = urlParams.get('_id');
-			console.log("id", id);
-			const examEntrance = await getExamEntranceDocument(id);
-			console.log("ExamEnt", examEntrance);
-
-			if (!examEntrance) {
-				return; // Need to return that no exam was found
-			}
-
-			// Get the IP address from the server
-			const ip = examEntrance.ip;
+			const ip = urlParams.get('ip');
 
 			// compute socket.io path (cozy cloud integration)
 			var parts = document.location.pathname.split('/')
@@ -166,7 +156,7 @@
 				self.activeSession = true;
 			}).on('rdp-bitmap', function(bitmap) {
 				console.log('[mstsc.js] bitmap update bpp : ' + bitmap.bitsPerPixel);
-				self.render.update(bitmap);
+				self.render.update(bitmap); // HERE
 			}).on('rdp-close', function() {
 				next(null);
 				console.log('[mstsc.js] close');
@@ -199,17 +189,3 @@
 		}
 	}
 })();
-
-async function getExamEntranceDocument(id) {
-	const Mongo, { ObjectId } = require('mongodb');
-	const MongoClient = Mongo.MongoClient;
-
-	const password = "jxRW7pfsKWShxvZw";
-	const dbName = "osStag";
-	const uri = `mongodb+srv://server:${password}@os-staging-hwulk.mongodb.net/test?retryWrites=true&w=majority`;
-	const client = new MongoClient(uri, { useNewUrlParser: true });
-	client.connect(err => {
-		const examEntrance = client.db(dbName).collection("examEntrances").findOne({_id: ObjectId(id)});
-		return examEntrance;
-	});
-}
