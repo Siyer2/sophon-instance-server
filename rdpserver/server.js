@@ -18,6 +18,10 @@
  */
 
 var rdp = require('node-rdpjs');
+var AWS = require('aws-sdk');
+AWS.config.loadFromPath('./awsKeys.json');
+var Client = require('ssh2-sftp-client');
+var sftp = new Client();
 
 /**
  * Create proxy between rdp layer and socket io
@@ -69,10 +73,84 @@ module.exports = function (server) {
 			if (!rdpClient) return;
 
 			rdpClient.sendKeyEventUnicode(code, isPressed);
-		}).on('disconnect', function() {
+		}).on('disconnect', async function() {
 			if(!rdpClient) return;
+			
+			// Get the student submission here
+			console.log("getting student submission...");
+			await getStudentSubmission('13.211.63.85', 'z5113480_i09');
 
 			rdpClient.close();
 		});
+	});
+}
+
+function getStudentSubmission(publicIpAddress, directory) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			console.log("Attempting connection to instance...", publicIpAddress);
+			sftp.connect({
+				host: publicIpAddress,
+				username: 'Administrator',
+				password: '4mbA49H?vdO-mIp(=nTeP*psl4*j=Vwt',
+				port: '22'
+			}).then(() => {
+				return sftp.list('C:/Users/DefaultAccount/Desktop/submit');
+			}).then((data) => {
+				len = data.length;
+				data.forEach(x => {
+					let remoteFilePath = 'C:/Users/DefaultAccount/Desktop/submit/' + x.name;
+					sftp.get(remoteFilePath).then(async (stream) => {
+						let file = `${directory}/${x.name}`;
+
+						// Save the submission in S3
+						// const savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
+						const savedLocation = await uploadToS3(stream, file, 'student-submissions.optricom.com');
+
+						// TO-DO: Upload the saved location to mongo, 
+						// collection: examEntrances, field: submissionLocation
+						console.log(savedLocation);
+					});
+				});
+
+				resolve();
+			}).catch((err) => {
+				console.log(err, 'catch error');
+				reject(err);
+			});
+		} catch (ex) {
+			reject(ex);
+			console.log("EXCEPTION GETTING SUBMIT FOLDER", ex);
+		}
+	});
+}
+
+function uploadToS3(file, filepath, bucket) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			var s3 = new AWS.S3({
+				apiVersion: '2006-03-01',
+				params: {
+					Bucket: bucket
+				}
+			});
+
+			const uploadParams = {
+				Bucket: bucket,
+				Key: filepath,
+				Body: file
+			}
+
+			s3.upload(uploadParams, function (err, data) {
+				if (err) {
+					console.log("AWS ERROR UPLOADING TO S3", err);
+				} if (data) {
+					resolve(data.Location);
+				}
+			});
+		} catch (ex) {
+			console.log("EXCEPTION UPLOADING TO S3", ex);
+			reject(ex);
+		}
 	});
 }
