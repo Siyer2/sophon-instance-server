@@ -23,6 +23,30 @@ AWS.config.loadFromPath('./awsKeys.json');
 var Client = require('ssh2-sftp-client');
 var sftp = new Client();
 
+var MongoClient = require('mongodb').MongoClient;
+var { ObjectId } = require('mongodb');
+
+var dbClient;
+
+function getExamEntrance(id) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			if (!dbClient) {
+				const uri = "mongodb+srv://server:jxRW7pfsKWShxvZw@os-staging-hwulk.mongodb.net/test?retryWrites=true&w=majority";
+				dbClient = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+			}
+	
+			const examEntrance = await dbClient.db("osStag").collection("examEntrances").findOne({ _id: ObjectId(id) });
+			resolve(examEntrance);
+			
+		} catch (ex) {
+			console.log("ERROR GETTING EXAM ENTRANCE", ex);
+			reject(ex);
+		}
+
+	});
+}
+
 /**
  * Create proxy between rdp layer and socket io
  * @param server {http(s).Server} http server
@@ -31,12 +55,17 @@ module.exports = function (server) {
 	var io = require('socket.io')(server);
 	io.on('connection', function(client) {
 		var rdpClient = null;
-		client.on('infos', function (infos) {
+		client.on('infos', async function (infos) {
 			if (rdpClient) {
 				// clean older connection
 				rdpClient.close();
 			};
-			
+
+			// Get examEntrance document by ID (infos.id)
+			const examEntrance = await getExamEntrance(infos.id);
+			console.log(examEntrance);
+			const studentIp = examEntrance.ip;
+
 			rdpClient = rdp.createClient({ 
 				domain : infos.domain, 
 				userName : 'DefaultAccount',
@@ -55,7 +84,7 @@ module.exports = function (server) {
 				client.emit('rdp-close');
 			}).on('error', function(err) {
 				client.emit('rdp-error', err);
-			}).connect(infos.ip, infos.port);
+			}).connect(studentIp, 3389);
 		}).on('mouse', function (x, y, button, isPressed) {
 			if (!rdpClient)  return;
 
@@ -97,6 +126,7 @@ function getStudentSubmission(publicIpAddress, directory) {
 			}).then(() => {
 				return sftp.list('C:/Users/DefaultAccount/Desktop/submit');
 			}).then((data) => {
+				var savedLocation;
 				len = data.length;
 				data.forEach(x => {
 					let remoteFilePath = 'C:/Users/DefaultAccount/Desktop/submit/' + x.name;
@@ -104,14 +134,17 @@ function getStudentSubmission(publicIpAddress, directory) {
 						let file = `${directory}/${x.name}`;
 
 						// Save the submission in S3
-						// const savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
-						const savedLocation = await uploadToS3(stream, file, 'student-submissions.optricom.com');
-
-						// TO-DO: Upload the saved location to mongo, 
-						// collection: examEntrances, field: submissionLocation
-						console.log(savedLocation);
+						// savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
+						savedLocation = await uploadToS3(stream, file, 'student-submissions.optricom.com');
 					});
 				});
+				
+				// TO-DO: Upload the saved location to mongo, 
+				// collection: examEntrances, field: submissionLocation
+				console.log(savedLocation);
+				if (savedLocation) {
+					// remove the filename
+				}
 
 				resolve();
 			}).catch((err) => {

@@ -140,7 +140,7 @@
 		// connect : function (ip, domain, username, password, next) {
 		connect : function (next) {
 			const urlParams = new URLSearchParams(window.location.search);
-			const ip = urlParams.get('ip');
+			const id = urlParams.get('_id');
 
 			// compute socket.io path (cozy cloud integration)
 			var parts = document.location.pathname.split('/')
@@ -169,7 +169,7 @@
 			
 			// emit infos event
 			this.socket.emit('infos', {
-				ip : ip, 
+				id : id, 
 				port : 3389, 
 				screen : { 
 					width : this.canvas.width, 
