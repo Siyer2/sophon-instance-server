@@ -79,6 +79,29 @@ function updateExamSubmissionLocation(id, submissionLocation) {
 	})
 }
 
+function deleteInstanceById(instanceId) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const ec2 = new AWS.EC2();
+			var params = {
+				InstanceIds: [instanceId]
+			};
+			ec2.terminateInstances(params, function (err, data) {
+				if (err) {
+					console.log("AWS ERROR TERMINATING INSTANCES", err);
+				}
+				else {
+					resolve();
+				}
+			});
+			resolve();
+		} catch (ex) {
+			console.log("EXCEPTION DELETING INSTANCE", ex);
+			reject(ex);
+		}
+	});
+}
+
 /**
  * Create proxy between rdp layer and socket io
  * @param server {http(s).Server} http server
@@ -144,6 +167,9 @@ module.exports = function (server) {
 
 			// Upload the saved location to mongo as submissionLocation
 			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
+
+			// Delete the instance
+			await deleteInstanceById(examEntrance.instanceId);
 
 			rdpClient.close();
 		});
