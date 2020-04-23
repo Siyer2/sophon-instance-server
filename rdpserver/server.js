@@ -198,7 +198,11 @@ function getStudentSubmission(publicIpAddress, directory) {
 						await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
 					});
 				});
-				
+
+				sftp.on('error', error => {
+					console.log(error);
+				});
+
 				resolve();
 			}).catch((err) => {
 				console.log(err, 'catch error');
