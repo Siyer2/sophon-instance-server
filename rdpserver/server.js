@@ -109,6 +109,12 @@ function deleteInstanceById(instanceId) {
 module.exports = function (server) {
 	var io = require('socket.io')(server);
 	io.on('connection', function(client) {
+		const inSeb = client.handshake.headers['user-agent'].includes("SEB");
+		if (!inSeb) {
+			client.emit("not in seb");
+			return;
+		}
+
 		var rdpClient = null;
 		client.on('infos', async function (infos) {
 			if (rdpClient) {
@@ -169,7 +175,7 @@ module.exports = function (server) {
 			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
 
 			// Delete the instance
-			await deleteInstanceById(examEntrance.instanceId);
+			// await deleteInstanceById(examEntrance.instanceId);
 
 			rdpClient.close();
 		});
