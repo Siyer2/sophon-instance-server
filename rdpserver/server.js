@@ -188,7 +188,6 @@ function getStudentSubmission(publicIpAddress, directory) {
 			}).then(() => {
 				return sftp.list('C:/Users/DefaultAccount/Desktop/submit');
 			}).then((data) => {
-				var savedLocation;
 				len = data.length;
 				data.forEach(x => {
 					let remoteFilePath = 'C:/Users/DefaultAccount/Desktop/submit/' + x.name;
@@ -196,10 +195,10 @@ function getStudentSubmission(publicIpAddress, directory) {
 						let file = `${directory}/${x.name}`;
 
 						// Save the submission in S3
-						savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
+						await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
 					});
 				});
-
+				
 				resolve();
 			}).catch((err) => {
 				console.log(err, 'catch error');
