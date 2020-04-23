@@ -26,25 +26,57 @@ var sftp = new Client();
 var MongoClient = require('mongodb').MongoClient;
 var { ObjectId } = require('mongodb');
 
+var config = require('../config');
 var dbClient;
+
+function getDB() {
+	return new Promise(async (resolve, reject) => {
+		try {
+			if (!dbClient) {
+				const uri = config.settings.DB_CONNECTION_STRING;
+				dbClient = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+				resolve(dbClient);
+			}
+			else {
+				resolve(dbClient);
+			}
+		} catch (ex) {
+			console.log("EXCEPTION GETTING DB", ex);
+			reject(ex);
+		}
+	})
+}
 
 function getExamEntrance(id) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			if (!dbClient) {
-				const uri = "mongodb+srv://server:jxRW7pfsKWShxvZw@os-staging-hwulk.mongodb.net/test?retryWrites=true&w=majority";
-				dbClient = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-			}
-	
-			const examEntrance = await dbClient.db("osStag").collection("examEntrances").findOne({ _id: ObjectId(id) });
+			const db = await getDB();
+			const examEntrance = await db.db("osStag").collection("examEntrances").findOne({ _id: ObjectId(id) });
 			resolve(examEntrance);
-			
 		} catch (ex) {
 			console.log("ERROR GETTING EXAM ENTRANCE", ex);
 			reject(ex);
 		}
 
 	});
+}
+
+function updateExamSubmissionLocation(id, submissionLocation) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			const db = await getDB();
+			db.db("osStag").collection("examEntrances").updateOne({ _id: id }, {
+				$set: {
+					submissionLocation
+				}
+			});
+
+			resolve();
+		} catch (ex) {
+			console.log("ERROR UPDATING EXAM SUBMISSION LOCATION", ex);
+			reject(ex);
+		}	
+	})
 }
 
 /**
@@ -63,7 +95,6 @@ module.exports = function (server) {
 
 			// Get examEntrance document by ID (infos.id)
 			const examEntrance = await getExamEntrance(infos.id);
-			console.log(examEntrance);
 			const studentIp = examEntrance.ip;
 
 			rdpClient = rdp.createClient({ 
@@ -104,10 +135,15 @@ module.exports = function (server) {
 			rdpClient.sendKeyEventUnicode(code, isPressed);
 		}).on('disconnect', async function() {
 			if(!rdpClient) return;
-			
+			const id = client.handshake.query._id;
+
 			// Get the student submission here
-			console.log("getting student submission...");
-			await getStudentSubmission('13.211.63.85', 'z5113480_i09');
+			const examEntrance = await getExamEntrance(id);
+			const submissionLocation = `${examEntrance.examCode}/${examEntrance.studentId}`;
+			await getStudentSubmission(examEntrance.ip, submissionLocation);
+
+			// Upload the saved location to mongo as submissionLocation
+			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
 
 			rdpClient.close();
 		});
@@ -134,17 +170,9 @@ function getStudentSubmission(publicIpAddress, directory) {
 						let file = `${directory}/${x.name}`;
 
 						// Save the submission in S3
-						// savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
-						savedLocation = await uploadToS3(stream, file, 'student-submissions.optricom.com');
+						savedLocation = await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
 					});
 				});
-				
-				// TO-DO: Upload the saved location to mongo, 
-				// collection: examEntrances, field: submissionLocation
-				console.log(savedLocation);
-				if (savedLocation) {
-					// remove the filename
-				}
 
 				resolve();
 			}).catch((err) => {

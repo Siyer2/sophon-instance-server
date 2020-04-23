@@ -150,13 +150,13 @@
 			
 			// start connection
 			var self = this;
-			this.socket = io(window.location.protocol + "//" + window.location.host, { "path": path }).on('rdp-connect', function() {
+			this.socket = io(window.location.protocol + "//" + window.location.host, { "path": path, query: `_id=${id}` }).on('rdp-connect', function() {
 				// this event can be occured twice (RDP protocol stack artefact)
 				console.log('[mstsc.js] connected');
 				self.activeSession = true;
 			}).on('rdp-bitmap', function(bitmap) {
 				console.log('[mstsc.js] bitmap update bpp : ' + bitmap.bitsPerPixel);
-				self.render.update(bitmap); // HERE
+				self.render.update(bitmap);
 			}).on('rdp-close', function() {
 				next(null);
 				console.log('[mstsc.js] close');
