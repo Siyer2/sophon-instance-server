@@ -102,6 +102,12 @@ function deleteInstanceById(instanceId) {
 	});
 }
 
+function isInSEB(client) {
+	const inSeb = client.handshake.headers['user-agent'].includes("SEB");
+	
+	return inSeb ? true : false;
+}
+
 /**
  * Create proxy between rdp layer and socket io
  * @param server {http(s).Server} http server
@@ -109,8 +115,7 @@ function deleteInstanceById(instanceId) {
 module.exports = function (server) {
 	var io = require('socket.io')(server);
 	io.on('connection', function(client) {
-		const inSeb = client.handshake.headers['user-agent'].includes("SEB");
-		if (!inSeb) {
+		if (!isInSEB(client)) {
 			client.emit("not in seb");
 			return;
 		}
@@ -139,7 +144,13 @@ module.exports = function (server) {
 			}).on('connect', function () {
 				client.emit('rdp-connect');
 			}).on('bitmap', function(bitmap) {
-				client.emit('rdp-bitmap', bitmap);
+				if (!isInSEB(client)) {
+					client.emit("not in seb");
+					return;
+				}
+				else {
+					client.emit('rdp-bitmap', bitmap);
+				}
 			}).on('close', function() {
 				client.emit('rdp-close');
 			}).on('error', function(err) {
@@ -175,7 +186,7 @@ module.exports = function (server) {
 			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
 
 			// Delete the instance
-			// await deleteInstanceById(examEntrance.instanceId);
+			await deleteInstanceById(examEntrance.instanceId);
 
 			rdpClient.close();
 		});
