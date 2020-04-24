@@ -5,7 +5,13 @@ var config = require('../config');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  // Deduce the correct config key hash
+  if (!isInSEB(req.headers)) {
+    return res.render('error', {
+      message: "Can only open this in SEB. Simply open the .seb file downloaded from thesophon.com.",
+      error: {}
+    });
+  }
+
   const _id = req.query._id;
   if (!_id) {
     return res.render('error', {
@@ -13,6 +19,8 @@ router.get('/', function(req, res, next) {
       error: {}
     });
   }
+
+  // Deduce the correct config key hash
   const expectedHash = getExpectedHash(_id);
   const returnedHash = req.headers['x-safeexambrowser-configkeyhash'];
 
@@ -39,4 +47,9 @@ function getExpectedHash(_id) {
   return expectedHash;
 }
 
+function isInSEB(headers) {
+  const inSeb = headers['user-agent'].includes("SEB");
+
+  return inSeb ? true : false;
+}
 module.exports = router;
