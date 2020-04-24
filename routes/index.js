@@ -7,11 +7,16 @@ var config = require('../config');
 router.get('/', function(req, res, next) {
   // Deduce the correct config key hash
   const _id = req.query._id;
+  if (!_id) {
+    return res.render('error', {
+      message: "Invalid URL",
+      error: {}
+    });
+  }
   const expectedHash = getExpectedHash(_id);
-
   const returnedHash = req.headers['x-safeexambrowser-configkeyhash'];
 
-  // Only return index if it is the correct config key hash (otherwise say the config key has changed, please reset it to the original that was downloaded from sophon.it)
+  // Only return index if it is the correct config key hash
   const isCorrectFile = expectedHash === returnedHash;
   if (isCorrectFile) {
     res.render('index');
@@ -22,7 +27,6 @@ router.get('/', function(req, res, next) {
       error: {}
     });
   }
-
 });
 
 function getExpectedHash(_id) {
