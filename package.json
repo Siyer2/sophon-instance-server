@@ -16,6 +16,7 @@
     "morgan": "~1.7.0",
     "node-rdpjs": "https://github.com/Siyer2/node-rdpjs.git",
     "serve-favicon": "~2.3.0",
+    "sha.js": "^2.4.11",
     "socket.io": "^1.4.8",
     "ssh2-sftp-client": "^5.1.2"
   },
