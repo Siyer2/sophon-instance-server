@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 let settings = {
     DB_USER: "server",
     DB_PASSWORD: "jxRW7pfsKWShxvZw",
@@ -9,6 +11,10 @@ let settings = {
 if (process.env.DEPLOYMENT === 'production') {
     settings.DB_CONNECTION_STRING = `mongodb+srv://${settings.DB_USER}:${settings.DB_PASSWORD}@os-staging-pl-0.hwulk.mongodb.net/test?retryWrites=true&w=majority`;
     settings.INSTANCE_SERVER_URL = 'http://students.thesophon.com';
+}
+else if (process.env.DEPLOYMENT === 'local') {
+    settings.DB_CONNECTION_STRING = `mongodb://localhost:27017`;
+    settings.INSTANCE_SERVER_URL = 'http://localhost:3001'
 }
 else {
     settings.DB_CONNECTION_STRING = `mongodb+srv://${settings.DB_USER}:${settings.DB_PASSWORD}@os-staging-hwulk.mongodb.net/test?retryWrites=true&w=majority`;
