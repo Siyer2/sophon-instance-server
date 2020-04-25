@@ -34,7 +34,6 @@ function getDB() {
 		try {
 			if (!dbClient) {
 				const uri = config.settings.DB_CONNECTION_STRING;
-				console.log(uri);
 				dbClient = await MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 				resolve(dbClient);
 			}
