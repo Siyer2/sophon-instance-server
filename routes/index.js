@@ -39,7 +39,7 @@ router.get('/', function(req, res, next) {
 
 function getExpectedHash(_id) {
   const url = `${config.settings.INSTANCE_SERVER_URL}/?_id=${_id}`;
-  const sebJson = { "sendBrowserExamKey": true, "startURL": `${url}` };
+  const sebJson = { "browserViewMode": 1,"sendBrowserExamKey": true, "startURL": `${url}` };
   const sebJsonString = JSON.stringify(sebJson).replace(' ', '');
   const hashedSebJson = shajs('sha256').update(sebJsonString).digest('hex');
   const expectedHash = shajs('sha256').update(url + hashedSebJson).digest('hex');
