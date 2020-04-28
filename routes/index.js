@@ -7,7 +7,7 @@ var config = require('../config');
 router.get('/', function(req, res, next) {
   if (!isInSEB(req.headers)) {
     return res.render('error', {
-      message: "Can only open this in SEB. Simply open the .seb file downloaded from thesophon.com.",
+      message: "Can only open this in Safe Exam Browser. Simply open the .seb file downloaded from thesophon.com.",
       error: {}
     });
   }
