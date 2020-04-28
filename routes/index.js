@@ -3,6 +3,10 @@ var router = express.Router();
 var shajs = require('sha.js');
 var config = require('../config');
 
+router.get('/healthcheck', function(req, res, next) {
+  res.send(`INSTANCE SERVER is working || Version 1588063267 || ${process.env.DEPLOYMENT}`);
+});
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   if (!isInSEB(req.headers)) {
