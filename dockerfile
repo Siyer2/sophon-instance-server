@@ -19,6 +19,7 @@ COPY . .
 
 EXPOSE 3001
 
+ENV PORT=3001
 ENV DEPLOYMENT=production
 CMD [ "npm", "start" ]
 
