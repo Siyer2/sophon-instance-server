@@ -193,12 +193,12 @@ module.exports = function (server) {
 	});
 }
 
-function getStudentSubmission(publicIpAddress, directory) {
+function getStudentSubmission(ipAddress, directory) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			console.log("Attempting connection to instance...", publicIpAddress);
+			console.log("Attempting connection to instance...", ipAddress);
 			sftp.connect({
-				host: publicIpAddress,
+				host: ipAddress,
 				username: 'Administrator',
 				password: '4mbA49H?vdO-mIp(=nTeP*psl4*j=Vwt',
 				port: '22'
