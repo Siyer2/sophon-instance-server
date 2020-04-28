@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var rdp = require('node-rdpjs');
+var rdp = require('node-rdpjs-2');
 var AWS = require('aws-sdk');
 AWS.config.loadFromPath('./awsKeys.json');
 var Client = require('ssh2-sftp-client');
