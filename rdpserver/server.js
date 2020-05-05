@@ -180,54 +180,47 @@ module.exports = function (server) {
 			// Get the student submission here
 			const examEntrance = await getExamEntrance(id);
 			const submissionLocation = `${examEntrance.examCode}/${examEntrance.studentId}`;
-			await getStudentSubmission(examEntrance.ip, submissionLocation);
+			await getStudentSubmission(examEntrance.instanceId, submissionLocation);
 
 			// Upload the saved location to mongo as submissionLocation
 			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
 
 			// Delete the instance
-			await deleteInstanceById(examEntrance.instanceId);
+			// await deleteInstanceById(examEntrance.instanceId);
 
 			rdpClient.close();
 		});
 	});
 }
 
-function getStudentSubmission(ipAddress, directory) {
+function getStudentSubmission(instanceId, submissionLocation) {
+	console.log(`Pushing files to instance ${instanceId}...`);
 	return new Promise(async (resolve, reject) => {
 		try {
-			console.log("Attempting connection to instance...", ipAddress);
-			sftp.connect({
-				host: ipAddress,
-				username: 'Administrator',
-				password: '4mbA49H?vdO-mIp(=nTeP*psl4*j=Vwt',
-				port: '22'
-			}).then(() => {
-				return sftp.list('C:/Users/DefaultAccount/Desktop/submit');
-			}).then((data) => {
-				len = data.length;
-				data.forEach(x => {
-					let remoteFilePath = 'C:/Users/DefaultAccount/Desktop/submit/' + x.name;
-					sftp.get(remoteFilePath).then(async (stream) => {
-						let file = `${directory}/${x.name}`;
+			var ssm = new AWS.SSM();
+			var sendCommandParams = {
+				"DocumentName": "AWS-RunPowerShellScript",
+				"InstanceIds": [
+					instanceId
+				],
+				"Parameters": {
+					"commands": [
+						`Write-S3Object -BucketName ${config.settings.SUBMISSION_BUCKET} -Folder C:\\Users\\DefaultAccount\\Desktop\\submit -KeyPrefix ${submissionLocation} -Region ap-southeast-2`
+					]
+				}
+			}
 
-						// Save the submission in S3
-						await uploadToS3(stream, file, config.settings.SUBMISSION_BUCKET);
-					});
-				});
-
-				sftp.on('error', error => {
-					console.log(error);
-				});
-
-				resolve();
-			}).catch((err) => {
-				console.log(err, 'catch error');
-				reject(err);
+			ssm.sendCommand(sendCommandParams, function (err, data) {
+				if (err) {
+					console.log("AWS ERROR SENDING COMMAND", err);
+					reject(err);
+				}
+				else {
+					resolve(data);
+				}
 			});
 		} catch (ex) {
-			reject(ex);
-			console.log("EXCEPTION GETTING SUBMIT FOLDER", ex);
+			console.log("EXCEPTION PUSHING LECTURER FILE", ex);
 		}
 	});
 }
