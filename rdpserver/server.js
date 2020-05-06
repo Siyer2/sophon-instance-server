@@ -164,7 +164,7 @@ module.exports = function (server) {
 			const tags = [
 				{
 					Key: "CompletionTime",
-					Value: Date.now()
+					Value: Date.now().toString()
 				}
 			];
 			await updateEC2Tag(examEntrance.instanceId, tags);
