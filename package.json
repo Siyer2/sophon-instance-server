@@ -18,8 +18,7 @@
     "node-rdpjs-2": "^0.3.3",
     "serve-favicon": "~2.3.0",
     "sha.js": "^2.4.11",
-    "socket.io": "^1.4.8",
-    "ssh2-sftp-client": "^5.1.2"
+    "socket.io": "^1.4.8"
   },
   "engines": {
     "node": "4.1.1"

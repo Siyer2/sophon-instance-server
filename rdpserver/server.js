@@ -20,8 +20,6 @@
 var rdp = require('node-rdpjs-2');
 var AWS = require('aws-sdk');
 AWS.config.loadFromPath('./awsKeys.json');
-var Client = require('ssh2-sftp-client');
-var sftp = new Client();
 
 var MongoClient = require('mongodb').MongoClient;
 var { ObjectId } = require('mongodb');
@@ -77,29 +75,6 @@ function updateExamSubmissionLocation(id, submissionLocation) {
 			reject(ex);
 		}	
 	})
-}
-
-function deleteInstanceById(instanceId) {
-	return new Promise(async (resolve, reject) => {
-		try {
-			const ec2 = new AWS.EC2();
-			var params = {
-				InstanceIds: [instanceId]
-			};
-			ec2.terminateInstances(params, function (err, data) {
-				if (err) {
-					console.log("AWS ERROR TERMINATING INSTANCES", err);
-				}
-				else {
-					resolve();
-				}
-			});
-			resolve();
-		} catch (ex) {
-			console.log("EXCEPTION DELETING INSTANCE", ex);
-			reject(ex);
-		}
-	});
 }
 
 function isInSEB(client) {
@@ -185,8 +160,14 @@ module.exports = function (server) {
 			// Upload the saved location to mongo as submissionLocation
 			await updateExamSubmissionLocation(examEntrance._id, submissionLocation);
 
-			// Delete the instance
-			// await deleteInstanceById(examEntrance.instanceId);
+			// Update the instance to say it's done
+			const tags = [
+				{
+					Key: "CompletionTime",
+					Value: Date.now()
+				}
+			];
+			await updateEC2Tag(examEntrance.instanceId, tags);
 
 			rdpClient.close();
 		});
@@ -225,32 +206,27 @@ function getStudentSubmission(instanceId, submissionLocation) {
 	});
 }
 
-function uploadToS3(file, filepath, bucket) {
+function updateEC2Tag(instanceId, tags) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			var s3 = new AWS.S3({
-				apiVersion: '2006-03-01',
-				params: {
-					Bucket: bucket
-				}
-			});
-
-			const uploadParams = {
-				Bucket: bucket,
-				Key: filepath,
-				Body: file
-			}
-
-			s3.upload(uploadParams, function (err, data) {
+			const ec2 = new AWS.EC2();
+			var params = {
+				Resources: [
+					instanceId
+				],
+				Tags: tags
+			};
+			ec2.createTags(params, function (err, data) {
 				if (err) {
-					console.log("AWS ERROR UPLOADING TO S3", err);
-				} if (data) {
-					resolve(data.Location);
+					console.log("AWS ERROR CREATING TAG", err);
+					reject(err);
+				}
+				else {
+					resolve();
 				}
 			});
 		} catch (ex) {
-			console.log("EXCEPTION UPLOADING TO S3", ex);
-			reject(ex);
+			console.log("EXCEPTION UPDATING EC2 TAGS", ex);
 		}
 	});
 }

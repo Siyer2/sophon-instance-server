@@ -4,7 +4,7 @@ var shajs = require('sha.js');
 var config = require('../config');
 
 router.get('/healthcheck', function(req, res, next) {
-  res.send(`INSTANCE SERVER is working || Version 1588063267 || ${process.env.DEPLOYMENT}`);
+  res.send(`INSTANCE SERVER is working || Version 1588746900 || ${process.env.DEPLOYMENT}`);
 });
 
 /* GET home page. */
@@ -34,10 +34,12 @@ router.get('/', function(req, res, next) {
     res.render('index');
   }
   else {
-    res.render('error', {
-      message: `Cannot enter exam. \nThe config file has been changed or you are not using a compatible version of SEB. \nEnsure you return the .seb file to it's original configuration and have the right SEB version (Windows: 2.4 or greater, iOS: 2.1.16 or greater, Mac: 2.1.5pre2 or higher)`,
-      error: {}
-    });
+    console.log("FAILED CONFIG CHECK", `Expected: ${expectedHash}, Returned: ${returnedHash}`);
+    res.render('index');
+    // res.render('error', {
+    //   message: `Cannot enter exam. \nThe config file has been changed or you are not using a compatible version of SEB. \nEnsure you return the .seb file to it's original configuration and have the right SEB version (Windows: SEB 2.4 or greater, iOS: SEB 2.1.16 or greater, Mac: SEB 2.1.5pre2 or higher).\n Expected: ${expectedHash}, Returned: ${returnedHash}`,
+    //   error: {}
+    // });
   }
 });
 
