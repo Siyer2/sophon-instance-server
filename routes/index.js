@@ -4,7 +4,7 @@ var shajs = require('sha.js');
 var config = require('../config');
 
 router.get('/healthcheck', function(req, res, next) {
-  res.send(`INSTANCE SERVER is working || Version Oprah's Bank Account || ${process.env.DEPLOYMENT}`);
+  res.send(`INSTANCE SERVER is working || Version 'Life is Good' || ${process.env.DEPLOYMENT}`);
 });
 
 /* GET home page. */
