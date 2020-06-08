@@ -186,7 +186,7 @@ function getStudentSubmission(instanceId, submissionLocation) {
 				],
 				"Parameters": {
 					"commands": [
-						`Write-S3Object -BucketName ${config.settings.SUBMISSION_BUCKET} -Folder C:\\Users\\DefaultAccount\\Desktop\\submit -KeyPrefix ${submissionLocation} -Region ap-southeast-2`
+						`Write-S3Object -BucketName ${config.settings.SUBMISSION_BUCKET} -Folder C:\\Users\\DefaultAccount\\Desktop\\submit -KeyPrefix ${submissionLocation} -Region ap-southeast-2 -Recurse`
 					]
 				}
 			}
