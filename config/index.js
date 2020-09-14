@@ -2,8 +2,8 @@ require('dotenv').config()
 
 let settings = {
     DB_USER: "server",
-    DB_PASSWORD: "jxRW7pfsKWShxvZw",
-    DB_NAME: "osStag",
+    DB_PASSWORD: "",
+    DB_NAME: "",
     SUBMISSION_BUCKET: 'student-submissions.thesophon.com', // handles submissions by students
     UPLOAD_BUCKET: 'uploads.thesophon.com', // handles questions from teachers
 }
