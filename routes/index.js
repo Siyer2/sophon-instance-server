@@ -29,6 +29,7 @@ router.get('/', function(req, res, next) {
   const returnedHash = req.headers['x-safeexambrowser-configkeyhash'];
 
   // Only return index if it is the correct config key hash
+  // NOTE: THERE IS A BUG IN SEB THAT STOP THE CORRECT HASH FROM BEING RETURNED ON WINDOWS
   const isCorrectFile = expectedHash === returnedHash;
   if (isCorrectFile) {
     res.render('index');
